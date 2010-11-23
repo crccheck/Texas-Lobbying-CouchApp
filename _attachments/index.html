@@ -1,29 +1,132 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>My New CouchApp</title>
+    <script src="vendor/couchapp/loader.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.0/jquery-ui.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.8.2r1/build/reset/reset-min.css">
+    <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1/themes/base/jquery-ui.css" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="style/main.css" type="text/css">
+    <title>Key Fix</title>
+    <!--[if IE]>
+        <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
   </head>
   <body>
-    <div id="account"></div>
 
-    <h1>Generated CouchApp</h1>
+<ul id="keys">
 
-    <div id="profile"></div>
-    <div id="items"></div>
+</ul>
 
-    <div id="sidebar">
-      <p>Edit welcome message.</p>
-      <p>Ideas: You could easily turn this into a photo sharing app, or a grocery list, or a chat room.</p>
-    </div>
   </body>
-  <script src="vendor/couchapp/loader.js"></script>
-  <script type="text/javascript" charset="utf-8">
-    $.couch.app(function(app) {
-      $("#account").evently("account", app);
-      $("#profile").evently("profile", app);
-      $.evently.connect("#account","#profile", ["loggedIn","loggedOut"]);
-      $("#items").evently("items", app);
+  <script>
+window.log=function(){log.history=log.history||[];log.history.push(arguments);if(this.console){console.log(Array.prototype.slice.call(arguments))}};
+
+$db = $.couch.db("lobbying");
+
+var key_data_cache = {};
+var key_elem_cache = {};
+var request;
+
+function addfix(goodKey, badKey){
+    badKey = escape(badKey);
+    $.ajax({
+        url: '/couch/lobbying_keyfix/'+badKey,
+        data: {data: goodKey},
+        type: 'POST',
+        dataType: 'json',
+        error: function(req, text, error){
+            log(req, text, error);
+        },
+        success: function(data, test, req){
+            log(data, test, req);
+        }
     });
+}
+
+function display_key_data(elem, key, value){
+    function _display_key_data(elem, key, value){
+        var $elem = $(elem);
+        if ($elem.hasClass('loaded')) return;
+        var output = '';
+        if (value.city){
+            output += '<span class="city">' + value.city + '</span>';
+        }
+        if (value.zip){
+            output += '<span class="zip">' + value.zip + '</span>';
+        }
+        $elem.append(output).addClass('loaded');
+    }
+    function load_key_data(key){
+        // key = escape(key);
+        // todo debounce
+        // todo scan for next !.has('loaded') to intelligently come up with an endkey
+        return $db.view('lobbying/place-to-location',{
+            group_level: 1,
+            startkey: key,
+            limit: 30,
+            success: function(jsonData){
+                jsonData.rows.forEach(function(row){
+                    key_data_cache[row.key] = row.value;
+                    display_key_data(key_elem_cache[row.key], row.key, row.value);
+                });
+            }
+        });
+    }
+    if (value || (value = key_data_cache[key])){
+        _display_key_data(elem, key, value);
+    } else {
+        load_key_data(key);
+    }
+}
+
+function combine($parent, $child){
+    var newUl = $parent.closest('ul'),
+        oldUl = $child.closest('ul');
+    if (newUl[0] == $('#keys')[0]){
+        newUl = $parent.wrap('<li><ul/></li>').parent();
+    } else if (newUl[0] == oldUl[0]) {
+        newUl.prepend($child);
+        return;
+    }
+    newUl.append($child);
+}
+function combine($parent, $child){
+    var newUl = $parent.closest('ul'),
+        oldUl = $child.closest('ul');
+    if (newUl[0] == $('#keys')[0]){
+        newUl = $parent.wrap('<li><ul/></li>').parent();
+    } else if (newUl[0] == oldUl[0]) {
+        newUl.prepend($child);
+        return;
+    }
+    newUl.append($child);
+}
+(function load_data(){
+    $db.view("lobbying/places", {
+        group_level: 1,
+        success: function(jsonData){
+            var keys = $('#keys');
+            jsonData.rows.forEach(function(row){
+                elem = $('<li><span class="key">' + row.key + '</span></li>')
+                    .click(function(){
+                        if (!$(this).hasClass('loaded')) {
+                            display_key_data(this, row.key);
+                        }
+                    })
+                    .hide()
+                    .appendTo(keys);
+                key_elem_cache[row.key] = elem;
+            });
+            keys.children()
+                .draggable({addClasses: false, revert: true, zIndex: 1})
+                .droppable({addClasses: false,
+                            drop: function(e, ui){ combine($(e.target), ui.draggable); }})
+                .show();
+
+        }
+    });
+})();
+
   </script>
 </html>
