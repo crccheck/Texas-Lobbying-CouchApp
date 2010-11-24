@@ -1,3 +1,7 @@
 function(doc) {
-  emit(doc.place.name.toLowerCase(), 1);
+    if (doc.place) {
+        var name = doc.place.namefix || doc.place.name;
+        name = name.replace(/^the /i,'').toLowerCase();
+        emit(name, 1);
+    }
 }
