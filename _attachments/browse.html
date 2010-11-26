@@ -3,6 +3,7 @@
   <head>
     <script src="vendor/couchapp/loader.js"></script>
     <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.0/jquery-ui.min.js"></script>
+    <script src="vendor/couchapp/jquery.tablesorter.min.js"></script>
     <script src="lobbying.js"></script>
     <link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.8.2r1/build/reset/reset-min.css">
     <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1/themes/base/jquery-ui.css" rel="stylesheet" type="text/css" />
@@ -15,9 +16,10 @@
   </head>
   <body>
 
-<ul id="keys">
-
-</ul>
+<table id="keys" class="tablesorter">
+    <thead><tr><th>Place</th><th>Amount</th></tr></thead>
+    <tbody></tbody>
+</table>
 
   </body>
   <script>
@@ -30,15 +32,17 @@ var key_data_cache = {};
     $db.view("lobbying/place-to-amount", {
         group_level: 1,
         success: function(jsonData){
-            var keys = $('#keys');
+            var keys = $('#keys > tbody');
             jsonData.rows.forEach(function(row){
                 var hash = crc32(row.key);
-                elem = $('<li id="key-' + hash + '"><span class="key">' + row.key + '</span><span class="data">' + row.value + '</span></li>')
+                elem = $('<tr id="key-' + hash + '"><td class="key">' + row.key + '</td><td class="data">' + row.value + '</td></tr>')
                     .appendTo(keys);
             });
+            $('#keys').tablesorter();
         }
     });
 })();
+
 
   </script>
 </html>
