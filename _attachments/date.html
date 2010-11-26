@@ -8,7 +8,7 @@
     <link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.8.2r1/build/reset/reset-min.css">
     <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1/themes/base/jquery-ui.css" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="style/main.css" type="text/css">
-    <title>Browse</title>
+    <title>Browse Lobbyist Spending by Date</title>
     <!--[if IE]>
         <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
@@ -19,7 +19,7 @@
   <body>
 
 <table id="keys" class="tablesorter">
-    <thead><tr><th>Place</th><th>Amount</th></tr></thead>
+    <thead><tr><th>Month</th><th>Amount</th></tr></thead>
     <tbody></tbody>
 </table>
 
@@ -31,16 +31,17 @@ var key_data_cache = {};
 
 (function load_data(){
     log("Load Keys");
-    $db.view("lobbying/place-to-amount", {
+    $db.view("lobbying/month-to-amount", {
         group_level: 1,
         success: function(jsonData){
             var keys = $('#keys > tbody');
             jsonData.rows.forEach(function(row){
-                var hash = crc32(row.key);
-                elem = $('<tr id="key-' + hash + '"><td class="key">' + row.key + '</td><td class="value">' + row.value + '</td></tr>')
+                var year = +row.key.substr(0,3) + 1900;
+                var month = +row.key.substr(3) + 1;
+                elem = $('<tr><td class="key">' + year + '/' + month + '</td><td class="value">' + row.value + '</td></tr>')
                     .appendTo(keys);
             });
-            $('#keys').tablesorter();
+            $('#keys').tablesorter().tablebars();
         }
     });
 })();
