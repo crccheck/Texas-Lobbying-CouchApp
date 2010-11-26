@@ -50,31 +50,29 @@ function addfix(goodKey, badKey){
                     delete doc.place.namefix;
                     docs.docs.push(doc);
                 });
-                $db.bulkSave(docs, {
-                    success: function(data) { log("CLEARED " + data.length + " key fixes for " + key); },
-                    error: function(a, b, c) { log('ERROR',a,b,c); }
-                });
+                save(docs);
             }
         });
 
     }
-    goodKey = goodKey.replace('&amp;','&');
-    badKey = badKey.replace('&amp;','&');
-    //todo prevent circular references
+    function save(docs){
+        // either do a bulk save or single save depending on the number of docs
+        if (docs.docs.length > 1) {
+            $db.bulkSave(docs, {
+                success: function(data) { log("UPDATED", data.length); },
+                error: function(a, b, c) { log('ERROR',a,b,c); }
+            });
+        } else if (docs.docs.length == 1) {
+            $db.saveDoc(docs.docs[0]);
+        }
+    }
     if (goodKey === false) {
-
+        // do nothing
     } else if (!goodKey) {
         // delete this fix
         clearKeyfix(badKey);
     } else {
-        if (keyfix[goodKey]) {
-            // handle circular key references
-            log("ERROR: circular reference while mapping", badKey, "to", goodKey, "CONFLICT:", keyfix[goodKey]);
-            delete keyfix[goodKey];
-            clearKeyfix(goodKey);
-        }
-        keyfix[badKey] = goodKey;
-        $db.saveDoc(keyfix);
+        // todo handle circular key references
         $db.view('lobbying/place-to-doc', {
             key: badKey,
             success: function(data){
@@ -84,15 +82,8 @@ function addfix(goodKey, badKey){
                     doc.place.namefix = goodKey;
                     docs.docs.push(doc);
                 });
-                if (docs.docs.length > 1) {
-                $db.bulkSave(docs, {
-                    success: function(data) { log("UPDATED", data.length); },
-                    error: function(a, b, c) { log('ERROR',a,b,c); }
-                });
-                } else if (docs.docs.length == 1) {
-                    $db.saveDoc(docs.docs[0]);
-                }
-            }
+                save(docs);
+           }
         });
     }
 }
@@ -133,20 +124,21 @@ function display_key_data(elem, key, value){
     }
 }
 
-function combine($parent, $child){
-    var newUl = $parent.closest('ul'),
-        oldUl = $child.closest('ul');
-    if (newUl[0] == $('#keys')[0]){
+function combine($goodKey, $badKey){
+    var newUl = $goodKey.parent(),
+        oldUl = $badKey.parent();
+    if (newUl.attr('id')){
         // new keyfix
-        newUl = $parent.wrap('<li><ul/></li>').parent();
+        newUl = $goodKey.wrap('<li><ul/></li>').parent();
     } else if (newUl[0] == oldUl[0]) {
         // dragged onto self
-        newUl.prepend($child);
+        newUl.prepend($badKey);
+        // todo rename keyfix
         return;
     }
-    newUl.append($child);
+    newUl.append($badKey);
     var goodKey = newUl.find('.key').html();
-    addfix(goodKey, $child.children('.key').html());
+    addfix(goodKey, $badKey.children('.key').html());
 }
 
 
@@ -160,7 +152,7 @@ function combine($parent, $child){
                 var hash = crc32(row.key);
                 elem = $('<li id="key-' + hash + '"><span class="key">' + row.key + '</span></li>')
                     .click(function(){ if (!$(this).hasClass('loaded')) { display_key_data(this, row.key); } })
-                    .dblclick(function(){ addfix(prompt("new name"), row.key); })
+                    .dblclick(function(){ addfix(prompt("new name", row.key), row.key); })
                     .hide()
                     .appendTo(keys);
             });
@@ -175,41 +167,37 @@ function combine($parent, $child){
     });
 })();
 
+// pulls all the current key fixes in place, and displays them as level 2 lists
+//   if the "dirty" key has already been pulled, re-clean it
 function load_keys() {
     log("Load Key Fix DB");
-    $db.openDoc('!keyfix', {
+    $db.view('lobbying/keyfix', {
+        group_level: 1,
         success: function(data){
-            keyfix = data;
-            for (var key in keyfix){
-                (function(key){
-                    var dirtyKeyId = crc32(key);
+            for each (var row in data.rows){
+                (function(dirtyKey, cleanKey){
+                    var dirtyKeyId = crc32(dirtyKey);
                     var dirtyKeyLi = $('#key-' + dirtyKeyId);
-                    var cleanKeyId = crc32(keyfix[key]);
+                    var cleanKeyId = crc32(cleanKey);
                     var cleanKeyLi = $('#key-' + cleanKeyId);
-                    if (cleanKeyLi.length && !dirtyKeyLi.length){
+                    if (cleanKeyLi.length && dirtyKeyLi.length) {
+                        log('force update', dirtyKey, cleanKey);
+                        combine(cleanKeyLi, dirtyKeyLi);
+                    } else if (cleanKeyLi.length && !dirtyKeyLi.length){
                         if (cleanKeyLi.parent().attr('id')) {
                             cleanKeyLi.wrap('<li><ul/><li>')
                         }
-                        $('<li id="key-'+dirtyKeyId+'"><span class="key">' + key + '</span></li>')
-                            .click(function(){ if (!$(this).hasClass('loaded')) { display_key_data(this, key); } })
-                            .dblclick(function(){ addfix(prompt("new name"), key); })
+                        $('<li id="key-'+dirtyKeyId+'"><span class="key">' + dirtyKey + '</span></li>')
+                            .click(function(){ if (!$(this).hasClass('loaded')) { display_key_data(this, dirtyKey); } })
+                            .dblclick(function(){ addfix(prompt("new name"), dirtyKey); })
                             .draggable({addClasses: false, revert: true, zIndex: 1})
                             .droppable({addClasses: false,
                                         drop: function(e, ui){ combine($(e.target), ui.draggable); }})
                             .insertAfter(cleanKeyLi);
-                    } else if (key[0] != '_') {
-                        delete keyfix[key];
-                        log('orphaned key', key);
                     }
-                })(key);
+                })(row.key, row.value);
             }
         },
-        error: function(status, error, reason){
-            if (status === 404){
-                $db.saveDoc({_id: "!keyfix"});
-            }
-            log(status, error, reason);
-        }
     });
 }
 
