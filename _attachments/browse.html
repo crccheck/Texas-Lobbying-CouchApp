@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="vendor/couchapp/loader.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.0/jquery-ui.min.js"></script>
+    <script src="lobbying.js"></script>
+    <link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.8.2r1/build/reset/reset-min.css">
+    <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1/themes/base/jquery-ui.css" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="style/main.css" type="text/css">
+    <title>Browse</title>
+    <!--[if IE]>
+        <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+  </head>
+  <body>
+
+<ul id="keys">
+
+</ul>
+
+  </body>
+  <script>
+
+$db = $.couch.db("lobbying");
+var key_data_cache = {};
+
+(function load_data(){
+    log("Load Keys");
+    $db.view("lobbying/place-to-amount", {
+        group_level: 1,
+        success: function(jsonData){
+            var keys = $('#keys');
+            jsonData.rows.forEach(function(row){
+                var hash = crc32(row.key);
+                elem = $('<li id="key-' + hash + '"><span class="key">' + row.key + '</span><span class="data">' + row.value + '</span></li>')
+                    .appendTo(keys);
+            });
+        }
+    });
+})();
+
+  </script>
+</html>
