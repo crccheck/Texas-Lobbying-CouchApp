@@ -123,7 +123,11 @@ function combine($goodKey, $badKey){
     } else if (newUl[0] == oldUl[0]) {
         // dragged onto self
         newUl.prepend($badKey);
-        // todo rename keyfix
+        var goodKey = $badKey.find('.key').html();
+        addfix('', goodKey);    // clear this key
+        newUl.children(':gt(0)').each(function(){
+            addfix(goodKey, $(this).find('.key').html(), 'to');
+        });
         return;
     }
     newUl.append($badKey);
