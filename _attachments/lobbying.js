@@ -22,7 +22,7 @@ jQuery.fn.tablebars = function(options){
         // reset .bar bars if any already existed
         raw.children('.bar').remove().end()
             .css('position','relative')
-            .prepend($('<span class="bar" style="color: white; overflow:hidden; position:absolute; background:blue; width: 0;"></span>'));
+            .prepend($('<span class="bar" style="overflow:hidden; position:absolute; width: 0;"></span>'));
         for(var i=0; i<cols; ++i){ data.push([]); }
         for(var i=0; i<raw.length; ++i){
             data[i % cols].push(raw[i]);

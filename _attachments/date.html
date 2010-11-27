@@ -13,12 +13,16 @@
         <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
 <style>
-    #keys .value { width: 200px; }
+    #months { margin-left: 1em; }
+    #months td { padding-right: 1em; }
+    #months .value { width: 200px; }
+    .start { border-top: 2px solid black; }
+    .bar { background-color: #7CD3B5; }
 </style>
   </head>
   <body>
-
-<table id="keys" class="tablesorter">
+<h1>Lobbyist Spending by Month</h1>
+<table id="months" class="tablesorter">
     <thead><tr><th>Month</th><th>Amount</th></tr></thead>
     <tbody></tbody>
 </table>
@@ -34,14 +38,14 @@ var key_data_cache = {};
     $db.view("lobbying/month-to-amount", {
         group_level: 1,
         success: function(jsonData){
-            var keys = $('#keys > tbody');
+            var keys = $('#months > tbody');
             jsonData.rows.forEach(function(row){
                 var year = +row.key.substr(0,3) + 1900;
                 var month = +row.key.substr(3) + 1;
-                elem = $('<tr><td class="key">' + year + '/' + month + '</td><td class="value">' + row.value + '</td></tr>')
+                elem = $('<tr' + (month == 1 ? ' class="start"' : '')  + '><td class="date">' + year + '/' + month + '</td><td class="value">' + row.value + '</td></tr>')
                     .appendTo(keys);
             });
-            $('#keys').tablesorter().tablebars();
+            $('#months').tablesorter().tablebars();
         }
     });
 })();
