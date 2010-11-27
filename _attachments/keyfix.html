@@ -49,7 +49,11 @@ function addfix(goodKey, badKey){
                 error: function(a, b, c) { log('ERROR',a,b,c); }
             });
         } else if (docs.docs.length == 1) {
-            $db.saveDoc(docs.docs[0]);
+            $db.saveDoc(docs.docs[0], {
+                success: function(data){
+                    log("UPDATED", data.id);
+                }
+            });
         }
     }
     if (goodKey === false) {
@@ -136,7 +140,7 @@ function combine($goodKey, $badKey){
             var keys = $('#keys');
             jsonData.rows.forEach(function(row){
                 var hash = crc32(row.key);
-                elem = $('<li id="key-' + hash + '"><span class="key">' + row.key + '</span></li>')
+                elem = $('<li id="key-' + hash + '"><span class="key">' + row.key + '</span><span>' + row.value + '</span></li>')
                     .click(function(){ if (!$(this).hasClass('loaded')) { display_key_data(this, row.key); } })
                     .dblclick(function(){ addfix(prompt("new name", row.key), row.key); })
                     .hide()

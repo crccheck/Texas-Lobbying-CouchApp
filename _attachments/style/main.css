@@ -5,7 +5,7 @@ body {
   font-family: helvetica, arial, sans-serif;
   font-size: 11px;
 }
-#keys li { width: 47em; }
+#keys li { background: #eef; width: 47em; }
 #keys ul {
     margin-left: 2em;
 }
@@ -13,21 +13,24 @@ body {
     font-weight: bold;
     margin-left: -2em;
 }
-.key, .city, .zip {
+#keys li > span {
     display: inline-block;
     margin-right: 1em;
     overflow: hidden;
-    width: 30em;
     white-space: nowrap;
+    width: 3em;
 }
-.city {
+#keys .key {
+    width: 28em;
+}
+#keys .city {
     width: 9em;
 }
-.zip {
+#keys .zip {
     width: 4em;
     margin-right: 0;
 }
-.loaded {
+#keys .loaded {
     background-color: #ddf;
 }
 
