@@ -33,6 +33,21 @@
 $db = $.couch.db("lobbying");
 var key_data_cache = {};
 
+function load_data_month(parentRow, month){
+    log("Load Month",parentRow,month);
+    $db.view("lobbying/month-to-amount", {
+        group_level: 2,
+        startkey: [month],
+        endkey: [month, {}],
+        success: function(jsonData){
+            jsonData.rows.forEach(function(row){
+                $('<p title="' + row.key[1] + '">' + row.value + '</p>').appendTo(parentRow);
+
+            });
+        }
+    });
+}
+
 (function load_data(){
     log("Load Keys");
     $db.view("lobbying/month-to-amount", {
@@ -42,11 +57,12 @@ var key_data_cache = {};
             var now = new Date,
                 now = now.getYear() + "" + now.getMonth();
             jsonData.rows.forEach(function(row){
-                date = row.key[0];
+                var date = row.key[0];
                 if (date <= now) {
                     var year = Math.floor(date/100) + 1900;
                     var month = (date % 100) + 1;
                     elem = $('<tr' + (month == 1 ? ' class="start"' : '')  + '><td class="date">' + year + '/' + month + '</td><td class="value">' + row.value + '</td></tr>')
+                        .one('click', function(){ load_data_month($(this).children('td.value'), date); })
                         .appendTo(keys);
                 }
             });
