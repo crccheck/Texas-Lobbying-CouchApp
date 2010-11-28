@@ -2,31 +2,44 @@
 <html>
   <head>
     <script src="vendor/couchapp/loader.js"></script>
-    <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.0/jquery-ui.min.js"></script>
-    <script src="vendor/couchapp/jquery.tablesorter.min.js"></script>
+    <script src="protovis-r3.2.js"></script>
     <script src="lobbying.js"></script>
     <link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.8.2r1/build/reset/reset-min.css">
-    <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1/themes/base/jquery-ui.css" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="style/main.css" type="text/css">
     <title>Browse Lobbyist Spending by Date</title>
     <!--[if IE]>
         <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
 <style>
-    #months { margin-left: 1em; }
-    #months td { padding-right: 1em; }
-    #months .value { width: 200px; }
-    .start { border-top: 2px solid black; }
-    .bar { background-color: #7CD3B5; }
+    #months { line-height: 1em; white-space: nowrap; }
+    #months > li {
+        display: inline-block;
+        width: 200px;
+        height: 600px;
+        position: relative;
+        overflow: hidden;
+    }
+    .date {
+        bottom: 0;
+        position: absolute;
+        text-align: center;
+        width: 100%;
+    }
+    .value {
+        background: #cdf;
+        position: absolute;
+        bottom: 1em;
+        width: 100%;
+    }
+    .label {
+        position: absolute;
+        top: -1em;
+    }
 </style>
   </head>
   <body>
 <h1>Lobbyist Spending by Month</h1>
-<table id="months" class="tablesorter">
-    <thead><tr><th>Month</th><th>Amount</th></tr></thead>
-    <tbody></tbody>
-</table>
-
+<ul id="months"></ul>
   </body>
   <script>
 
@@ -34,16 +47,47 @@ $db = $.couch.db("lobbying");
 var key_data_cache = {};
 
 function load_data_month(parentRow, month){
-    log("Load Month",parentRow,month);
+    log("Load Month",parentRow, month);
     $db.view("lobbying/month-to-amount", {
         group_level: 2,
         startkey: [month],
         endkey: [month, {}],
         success: function(jsonData){
+            data = {};
             jsonData.rows.forEach(function(row){
-                $('<p title="' + row.key[1] + '">' + row.value + '</p>').appendTo(parentRow);
-
+                data[row.key[1]] = row.value;
+                //$('<p title="' + row.key[1] + '">' + row.value + '</p>').appendTo(parentRow);
             });
+/** Computes the full class name of a given node. */
+function title(d) {
+  return d.parentNode ? (title(d.parentNode) + "." + d.nodeName) : d.nodeName;
+}
+
+    re = "",
+    color = pv.Colors.category19().by(function(d) d.nodeName);
+    nodes = pv.dom(data).root(month).nodes();
+
+var vis = new pv.Panel()
+    .width(parentRow.width())
+    .height(parentRow.height())
+    .canvas('bar-' + month);
+
+var treemap = vis.add(pv.Layout.Treemap)
+    .nodes(nodes)
+    .round(true);
+
+treemap.leaf.add(pv.Panel)
+    .fillStyle(function(d) color(d).alpha(title(d).match(re) ? 1 : .2))
+    .strokeStyle("#fff")
+    .lineWidth(1)
+    .antialias(false);
+
+treemap.label.add(pv.Label)
+    .textStyle(function(d) pv.rgb(0, 0, 0, title(d).match(re) ? 1 : .2));
+
+vis.render();
+
+
         }
     });
 }
@@ -53,20 +97,30 @@ function load_data_month(parentRow, month){
     $db.view("lobbying/month-to-amount", {
         group_level: 1,
         success: function(jsonData){
-            var keys = $('#months > tbody');
+            var keys = $('#months');
             var now = new Date,
                 now = now.getYear() + "" + now.getMonth();
+            var max = 0;
+            var values = [];
             jsonData.rows.forEach(function(row){
                 var date = row.key[0];
                 if (date <= now) {
                     var year = Math.floor(date/100) + 1900;
                     var month = (date % 100) + 1;
-                    elem = $('<tr' + (month == 1 ? ' class="start"' : '')  + '><td class="date">' + year + '/' + month + '</td><td class="value">' + row.value + '</td></tr>')
-                        .one('click', function(){ load_data_month($(this).children('td.value'), date); })
+                    max = Math.max(max, row.value);
+                    values.push(row.value);
+                    elem = $('<li' + (month == 1 ? ' class="start"' : '')  + '><h2 class="date">' + year + '/' + month + '</h2><div class="value"><span class="label">' + row.value + '</span><div id="bar-'+date+'"></div></div></li>')
+                        .one('click', function(){ load_data_month($(this).children('.value'), date); })
                         .appendTo(keys);
                 }
             });
-            $('#months').tablesorter().tablebars();
+            keys.children().each(function(i){
+                var $value = $(this).children('.value');
+                var value = values[i];
+                log(value, value/max);
+                $value.height(550 * value / max)
+
+            });
         }
     });
 })();
