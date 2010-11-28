@@ -39,11 +39,16 @@ var key_data_cache = {};
         group_level: 1,
         success: function(jsonData){
             var keys = $('#months > tbody');
+            var now = new Date,
+                now = now.getYear() + "" + now.getMonth();
             jsonData.rows.forEach(function(row){
-                var year = +row.key.substr(0,3) + 1900;
-                var month = +row.key.substr(3) + 1;
-                elem = $('<tr' + (month == 1 ? ' class="start"' : '')  + '><td class="date">' + year + '/' + month + '</td><td class="value">' + row.value + '</td></tr>')
-                    .appendTo(keys);
+                date = row.key[0];
+                if (date <= now) {
+                    var year = Math.floor(date/100) + 1900;
+                    var month = (date % 100) + 1;
+                    elem = $('<tr' + (month == 1 ? ' class="start"' : '')  + '><td class="date">' + year + '/' + month + '</td><td class="value">' + row.value + '</td></tr>')
+                        .appendTo(keys);
+                }
             });
             $('#months').tablesorter().tablebars();
         }
