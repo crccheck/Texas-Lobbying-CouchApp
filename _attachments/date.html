@@ -90,10 +90,12 @@ treemap.label.add(pv.Label)
 vis.render();
 
 
+            if (queue.length) queue.shift()();
+
         }
     });
 }
-
+var queue = [];
 (function load_data(){
     log("Load Keys");
     $db.view("lobbying/month-to-amount", {
@@ -112,7 +114,6 @@ vis.render();
                     max = Math.max(max, row.value);
                     values.push(row.value);
                     elem = $('<li' + (month == 1 ? ' class="start"' : '')  + '><h2 class="date">' + year + '/' + month + '</h2><div class="value"><span class="label">' + row.value + '</span><div id="bar-'+date+'"></div></div></li>')
-                        .one('click', function(){ load_data_month($(this).children('.value'), date); })
                         .appendTo(keys);
                 }
             });
@@ -120,8 +121,9 @@ vis.render();
                 var $value = $(this).children('.value');
                 var value = values[i];
                 $value.height(550 * value / max)
-
+                queue.push(function(){ load_data_month($value, +$value.children('div').attr('id').substr(4)); })
             });
+            queue.shift()();
         }
     });
 })();
