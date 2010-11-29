@@ -49,13 +49,13 @@ var key_data_cache = {};
 function load_data_month(parentRow, month){
     log("Load Month",parentRow, month);
     $db.view("lobbying/month-to-amount", {
-        group_level: 2,
+        group_level: 3,
         startkey: [month],
         endkey: [month, {}],
         success: function(jsonData){
-            data = {};
+            data = {'food':{}, 'entertainment':{}, 'award':{}, 'gift':{}};
             jsonData.rows.forEach(function(row){
-                data[row.key[1]] = row.value;
+                data[row.key[1]][row.key[2]] = row.value;
                 //$('<p title="' + row.key[1] + '">' + row.value + '</p>').appendTo(parentRow);
             });
 /** Computes the full class name of a given node. */
@@ -64,7 +64,7 @@ function title(d) {
 }
 
     re = "",
-    color = pv.Colors.category19().by(function(d) d.nodeName);
+    color = pv.Colors.category10().by(function(d) d.parentNode.nodeName);
     nodes = pv.dom(data).root(month).nodes();
 
 var vis = new pv.Panel()
@@ -77,13 +77,15 @@ var treemap = vis.add(pv.Layout.Treemap)
     .round(true);
 
 treemap.leaf.add(pv.Panel)
-    .fillStyle(function(d) color(d).alpha(title(d).match(re) ? 1 : .2))
+    .fillStyle(function(d) color(d))
+    //.fillStyle(function(d) color(d).alpha(title(d).match(re) ? 1 : .2))
     .strokeStyle("#fff")
     .lineWidth(1)
     .antialias(false);
 
 treemap.label.add(pv.Label)
-    .textStyle(function(d) pv.rgb(0, 0, 0, title(d).match(re) ? 1 : .2));
+    .textStyle(function(d) pv.rgb(0, 0, 0));
+    //.textStyle(function(d) pv.rgb(0, 0, 0, title(d).match(re) ? 1 : .2));
 
 vis.render();
 
@@ -117,7 +119,6 @@ vis.render();
             keys.children().each(function(i){
                 var $value = $(this).children('.value');
                 var value = values[i];
-                log(value, value/max);
                 $value.height(550 * value / max)
 
             });
