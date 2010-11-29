@@ -53,7 +53,7 @@ function load_data_month(parentRow, month){
         startkey: [month],
         endkey: [month, {}],
         success: function(jsonData){
-            data = {'food':{}, 'entertainment':{}, 'award':{}, 'gift':{}};
+            data = {'food':{'_':0}, 'entertainment':{'_':0}, 'award':{'_':0}, 'gift':{'_':0}};
             jsonData.rows.forEach(function(row){
                 data[row.key[1]][row.key[2]] = row.value;
                 //$('<p title="' + row.key[1] + '">' + row.value + '</p>').appendTo(parentRow);
