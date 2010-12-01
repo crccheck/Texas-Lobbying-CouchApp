@@ -3,7 +3,6 @@ import logging
 import simplejson as json
 import couchdb
 from urllib import urlopen, urlretrieve
-from zipfile import ZipFile
 import os
 from calendar import timegm
 from time import strptime
@@ -41,7 +40,7 @@ def err(s):
 def derp(s):
     logging.critical(s)
 
-def download():
+def download(force = False):
     ''' download the ZIP file to a temporary directory, and extract to the dataapp directory
         returns a list of CSV files '''
     def remote_getmtime():
@@ -56,12 +55,13 @@ def download():
     data_dir = 'csvdata'
     url = 'http://www.ethics.state.tx.us/tedd/TEC_LA_CSV.zip'
     log('time check %s %s' % (remote_getmtime(), local_getmtime()))
-    if abs(remote_getmtime() - local_getmtime()) > 7 * 864000:
+    if force or abs(remote_getmtime() - local_getmtime()) > 7 * 864000:
+        log('.FAIL pulling new files')
         # local data files are more than 7 days old
         f = urlretrieve(url)    # wishlist show progress bar of file download
         if not os.path.exists(data_dir):
             os.mkdir(data_dir)
-        os.system('unzip %s *.csv -d %s' % (f[0], os.path.abspath(data_dir)))
+        os.system('unzip %s -d %s' % (f[0], os.path.abspath(data_dir)))
     return [data_dir + '/' + f for f in os.listdir(data_dir) if f[-3:] == 'csv']
 
 def process(path_to_file):
