@@ -7,7 +7,7 @@ from zipfile import ZipFile
 import os
 from calendar import timegm
 from time import strptime
-from CSVProcessors import CSVProcessorAwrd, CSVProcessorEnt, CSVProcessorEvnt, CSVProcessorFood, CSVProcessorGift, CSVProcessorTran
+from CSVProcessors import CSVProcessorAwrd, CSVProcessorCVR, CSVProcessorEnt, CSVProcessorEvnt, CSVProcessorFood, CSVProcessorGift, CSVProcessorTran
 
 
 f = open('../.couchapprc','r')
@@ -16,7 +16,7 @@ f.close()
 DATABASE = data['env']['default']['db'].rsplit('/', 1)
 DATABASE = {'server': DATABASE[0], 'db': DATABASE[1]}
 
-CONFLICT = 'ignore' #update, replace, ignore
+CONFLICT = 'replace' #update, replace, ignore
 
 def couch_start(dbname = None):
     if dbname is None:
@@ -68,12 +68,12 @@ def process(path_to_file):
     log(path_to_file)
     processors = {
         'LaCVR.csv'  : CSVProcessorCVR,
-        'LaAwrd.csv' : CSVProcessorAwrd,
-        'LaEnt.csv'  : CSVProcessorEnt,
-        'LaEvnt.csv' : CSVProcessorEvnt,
-        'LaFood.csv' : CSVProcessorFood,
-        'LaGift.csv' : CSVProcessorGift,
-        'LaTran.csv' : CSVProcessorTran,
+        #'LaAwrd.csv' : CSVProcessorAwrd,
+        #'LaEnt.csv'  : CSVProcessorEnt,
+        #'LaEvnt.csv' : CSVProcessorEvnt,
+        #'LaFood.csv' : CSVProcessorFood,
+        #'LaGift.csv' : CSVProcessorGift,
+        #'LaTran.csv' : CSVProcessorTran,
     }
     try:
         processor = processors[os.path.basename(path_to_file)]()
@@ -169,8 +169,8 @@ def main():
     for f in files:
         process(f);
 
-def main():
-    get_lobbyists()
+#def main():
+#    get_lobbyists()
 
 logging.basicConfig(level=logging.INFO)
 
