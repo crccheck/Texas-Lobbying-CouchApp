@@ -1,3 +1,4 @@
 .couchapprc
 *.csv
 *.pyc
+.~lock.*

@@ -54,6 +54,45 @@ class CSVProcessor(object):
         }
         return (row_id, row_data)
 
+class CSVProcessorCVR(CSVProcessor):
+    ''' Cover Sheet '''
+    def __init__(self):
+        self.type = 'cover'
+    def process(self, row):
+        row_id = "%s-%s" % (self.type, row['IDNO'])
+        row_data = {
+            'report': {
+                            'id': int(row['REPNO']),
+                            'date': row['DUE_DATE'],
+                            'start': row['RPT_BEG_DT'],
+                            'end': row['RPT_END_DT'],
+                      },
+            'type': self.type,
+            'lobbyist': self.lobbyist_info(row),
+            'expenses': {
+                            'transportation': row['EXTYP_TRAN'],
+                            'food': row['EXTYP_FOOD'],
+                            'ent': row['EXTYP_ENT'],
+                            'gift': row['EXTYP_GIFT'],
+                            'award': row['EXTYPE_AWDS'],
+                            'event': row['EXTYPE_EVNT'],
+                            'media': row['EXTYP_MEDA'],
+                        },
+            'benefited': {
+                            'sen': row['EXBEN_SEN'],
+                            'rep': row['EXBEN_REP'],
+                            'other': row['EXBEN_OTH'],
+                            'leg_emp': row['EXBEN_LEG'],
+                            'exec_emp': row['EXBEN_EXEC'],
+                            'family': row['EXBEN_FAM'],
+                            'event': row['EXBEN_EVNT'],
+                            'guest': row['EXBEN_GUES'],
+                         }
+        }
+        row_id, row_data = super(CSVProcessorCVR, self).process(row)
+        return (row_id, row_data)
+
+
 class CSVProcessorAwrd(CSVProcessor):
     ''' Schedule F - Awards & Mementos '''
     def __init__(self):

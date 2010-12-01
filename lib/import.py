@@ -1,5 +1,6 @@
 from csv import DictReader
 import logging
+import simplejson as json
 import couchdb
 from urllib import urlopen, urlretrieve
 from zipfile import ZipFile
@@ -9,24 +10,24 @@ from time import strptime
 from CSVProcessors import CSVProcessorAwrd, CSVProcessorEnt, CSVProcessorEvnt, CSVProcessorFood, CSVProcessorGift, CSVProcessorTran
 
 
-DATABASE = {
-    'name': 'lobbying',
-    'host': 'localhost',
-    'port': '5984'
-}
+f = open('../.couchapprc','r')
+data = json.load(f)
+f.close()
+DATABASE = data['env']['default']['db'].rsplit('/', 1)
+DATABASE = {'server': DATABASE[0], 'db': DATABASE[1]}
 
 CONFLICT = 'ignore' #update, replace, ignore
 
 def couch_start(dbname = None):
     if dbname is None:
-        dbname = DATABASE['name']
+        dbname = DATABASE['db']
     debug('dbname is %s' % dbname)
     dbname = dbname.lower()
-    server = couchdb.client.Server()
+    server = couchdb.client.Server(DATABASE['server'])
     try:
-        db = server.create(dbname)
-    except couchdb.PreconditionFailed as e:
         db = server[dbname]
+    except couchdb.ResourceNotFound as e:
+        db = server.create(dbname)
     return db
 
 def debug(s):
@@ -66,6 +67,7 @@ def download():
 def process(path_to_file):
     log(path_to_file)
     processors = {
+        'LaCVR.csv'  : CSVProcessorCVR,
         'LaAwrd.csv' : CSVProcessorAwrd,
         'LaEnt.csv'  : CSVProcessorEnt,
         'LaEvnt.csv' : CSVProcessorEvnt,
@@ -102,10 +104,73 @@ def process(path_to_file):
     log("%d: Finished! Updates(%s)" % (i, updates))
     f.close()
 
+def get_lobbyists(path='csvdata/LobCon10.csv'):
+    '''import list of lobbyist from csv file. to get the csv file, you have to
+    download it from http://www.ethics.state.tx.us/dfs/loblists.htm '''
+    def add_client(doc, client):
+        if 'client' in doc:
+            for existing_client in doc['client']:
+                if existing_client['name'] == client['name']:
+                    return doc
+            doc['client'].append(client)
+        else:
+            # initial client
+            doc['client'] = [client]
+        return doc
+
+    db = couch_start()
+    f = open(path, 'r')
+    reader = DictReader(f)
+    for i, row in enumerate(reader):
+        id = "lobbyist-%d_%d" % (int(row['FILER_ID']), int(row['YEAR_APPL']))
+        year = int(row['YEAR_APPL'])
+        lobbyist = {
+            'name': row['LOBBYNAME'],
+            'id': int(row['FILER_ID']),
+            'occupation': row['NORM_BUS'],
+            'phone': row['LOBPHON'],
+            'address': row['ADDRESS1'] + (' ' + row['ADDRESS2'] if row['ADDRESS2'] else ''),
+            'city': row['CITY'],
+            'state': row['STATE'],
+            'zip': row['ZIPCODE'],
+            'employer': row['FIRM_NAML'],
+            'interest': row['I4E_NAML'],
+        }
+        client = {
+                    'name': row['CONCERNAME'],
+                    'compensation': {'low': row['NLOW'],
+                                     'high': row['NHIGH'],
+                                     'type': row['TYPECOPM']},
+                    'address': row['EC_ADR1'] + ' ' + row['EC_ADR2'],
+                    'state': row['EC_STCD'],
+                    'city': row['EC_CITY'],
+                    'zip': row['EC_ZIP4'],
+                 }
+        report = {
+                    'date': row['RPT_DATE'],
+                    'number': int(row['REPNO'])
+                 }
+        doc = db.get(id)
+        if not doc:
+            doc = {
+                '_id': id,
+                'year': year,
+                'lobbyist': lobbyist,
+                'report': report,
+                'type': 'lobbyist',
+            }
+        db[id] = add_client(doc, client)
+        if not (i % 100):
+            print i
+
+
 def main():
     files = download()
     for f in files:
         process(f);
+
+def main():
+    get_lobbyists()
 
 logging.basicConfig(level=logging.INFO)
 
