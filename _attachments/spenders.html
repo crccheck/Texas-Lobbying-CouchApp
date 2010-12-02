@@ -2,7 +2,6 @@
 <html>
   <head>
     <script src="vendor/couchapp/loader.js"></script>
-    <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.0/jquery-ui.min.js"></script>
     <script src="vendor/couchapp/jquery.tablesorter.min.js"></script>
     <script src="lobbying.js"></script>
     <link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.8.2r1/build/reset/reset-min.css">
@@ -26,8 +25,8 @@
   </head>
   <body>
 <header>
-<h1>Choose Year</h1>
-<ul id="years"></ul>
+    <h1>Choose Year</h1>
+    <ul id="years"></ul>
 </header>
 <section>
 <table id="keys" class="tablesorter">
@@ -52,6 +51,7 @@ $('#keys .key').live('click', function(){
     $db.show('lobbying/lobbyist','lobbyist-' + lobbyistId+'_'+year,{
         success: function(data){
             doc = data;
+            log(data);
             $('#main').text(data);
         }
     });
@@ -72,7 +72,7 @@ $('#keys .value').click(function(){
         success: function(jsonData){
             var keys = $('#years').empty();
             jsonData.rows.forEach(function(row){
-                $('<li><span class="label">' + row.key[0] + '</span><span class="total">'+row.value+'</span></li>')
+                $('<li><span class="label">' + row.key[0] + '</span><span class="total">' + currency(Math.round(row.value)) + '</span></li>')
                     .appendTo(keys);
             });
         }
@@ -90,7 +90,11 @@ function load_data(){
                     .data('key',row.key)
                     .appendTo(keys);
             });
-            $('#keys').tablesorter().tablebars();
+            $('#keys').tablesorter({
+                    debug: true,
+                    headers: {1: {sorter:"currency"}}
+                })
+            .tablebars();
         }
     });
 }

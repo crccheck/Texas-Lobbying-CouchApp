@@ -290,11 +290,7 @@
           }
           var name = name.split('/');
           var options = options || {};
-          var type = "GET";
-          var data= null;
-          $.ajax({
-              type: type,
-              data: data,
+          ajax({
               url: this.uri + "_design/" + name[0] +
                    "/_show/" + name[1] + "/" + id + encodeOptions(options)
             },
@@ -304,7 +300,7 @@
       };
     },
 
-    encodeDocId: encodeDocId, 
+    encodeDocId: encodeDocId,
 
     info: function(options) {
       ajax(
