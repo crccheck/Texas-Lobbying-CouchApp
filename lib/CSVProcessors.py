@@ -70,6 +70,7 @@ class CSVProcessorCVR(CSVProcessor):
                             'date': row['DUE_DATE'],
                             'start': row['RPT_BEG_DT'],
                             'end': row['RPT_END_DT'],
+                            'year': row['YEAR_APPL'],
                       },
             'type': self.type,
             'lobbyist': self.lobbyist_info(row),

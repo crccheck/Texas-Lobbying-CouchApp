@@ -2,3 +2,5 @@
 *.csv
 *.pyc
 .~lock.*
+.DS_Store
+lib/csvdata

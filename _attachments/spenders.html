@@ -22,7 +22,9 @@
     <thead><tr><th>Place</th><th>Amount</th></tr></thead>
     <tbody></tbody>
 </table>
+<div id="main">
 
+</div>
   </body>
   <script>
 
@@ -30,13 +32,34 @@ $db = $.couch.db("lobbying");
 var key_data_cache = {};
 
 (function load_data(){
-    $db.view("lobbying/lobbyist-to-amount", {
+    $db.view("lobbying/lobbyist-expense", {
         group_level: 2,
+        startkey: [2010],
         success: function(jsonData){
             var keys = $('#keys > tbody');
             jsonData.rows.forEach(function(row){
                 elem = $('<tr><td class="key">' + row.key[1] + '</td><td class="value">' + row.value + '</td></tr>')
                     .appendTo(keys);
+                elem.find('.key').click(function(){
+                    var lobbyistId = row.key[1].split(' ')[0];
+                    var year = 2010;
+                    $db.openDoc('lobbyist-'+lobbyistId+'_'+year,{
+                            success: function(data){
+                                doc = data;
+                                $('#main').text(JSON.stringify(data));
+                            }
+                        });
+                });
+                elem.find('.value').click(function(){
+                    var key = row.key;
+                    key.push({});
+                    $db.view("lobbying/lobbyist-expense", {
+                        group_level: 3,
+                        startkey: key.slice(0,2),
+                        endkey: key
+                    })
+
+                });
             });
             $('#keys').tablesorter().tablebars();
         }
