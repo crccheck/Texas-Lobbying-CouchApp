@@ -13,11 +13,28 @@
         <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
 <style>
+#years > li {
+    display: inline-block;
+    margin: 0 1em;
+    font-size: 2em;
+}
     #keys .value { width: 200px; }
 </style>
   </head>
   <body>
-
+<header>
+<h1>Choose Year</h1>
+<ul id="years">
+<li>2004</li>
+<li>2005</li>
+<li>2006</li>
+<li>2007</li>
+<li>2008</li>
+<li>2009</li>
+<li>2010</li>
+</ul>
+</header>
+<section>
 <table id="keys" class="tablesorter">
     <thead><tr><th>Place</th><th>Amount</th></tr></thead>
     <tbody></tbody>
@@ -25,46 +42,50 @@
 <div id="main">
 
 </div>
+</section>
   </body>
   <script>
+var $db = $.couch.db("lobbying");
+var year;
+$('#years > li').click(function(){
+    year = +this.innerHTML;
+    load_data();
+});
+$('#keys .key').live('click', function(){
+    var key = $(this).closest('tr').data('key');
+    var lobbyistId = key[1].split(' ')[0];
+    $db.show('lobbying/lobbyist','lobbyist-' + lobbyistId+'_'+year,{
+        success: function(data){
+            doc = data;
+            $('#main').text(data);
+        }
+    });
+});
+$('#keys .value').click(function(){
+    var key = $(this).closest('tr').data('key');
+    key.push({});
+    $db.view("lobbying/lobbyist-expense", {
+        group_level: 3,
+        startkey: key.slice(0,2),
+        endkey: key
+    });
 
-$db = $.couch.db("lobbying");
-var key_data_cache = {};
-
-(function load_data(){
+});
+function load_data(){
     $db.view("lobbying/lobbyist-expense", {
         group_level: 2,
-        startkey: [2010],
+        startkey: [year],
         success: function(jsonData){
             var keys = $('#keys > tbody');
             jsonData.rows.forEach(function(row){
-                elem = $('<tr><td class="key">' + row.key[1] + '</td><td class="value">' + row.value + '</td></tr>')
+                $('<tr><td class="key">' + row.key[1] + '</td><td class="value">' + row.value + '</td></tr>')
+                    .data('key',row.key)
                     .appendTo(keys);
-                elem.find('.key').click(function(){
-                    var lobbyistId = row.key[1].split(' ')[0];
-                    var year = 2010;
-                    $db.show('lobbying/lobbyist','lobbyist-' + lobbyistId+'_'+year,{
-                            success: function(data){
-                                doc = data;
-                                $('#main').text(data);
-                            }
-                        });
-                });
-                elem.find('.value').click(function(){
-                    var key = row.key;
-                    key.push({});
-                    $db.view("lobbying/lobbyist-expense", {
-                        group_level: 3,
-                        startkey: key.slice(0,2),
-                        endkey: key
-                    })
-
-                });
             });
             $('#keys').tablesorter().tablebars();
         }
     });
-})();
+}
 
 
   </script>
