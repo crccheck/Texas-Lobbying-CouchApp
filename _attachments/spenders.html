@@ -16,27 +16,22 @@
 #years > li {
     display: inline-block;
     margin: 0 1em;
-    font-size: 2em;
 }
-    #keys .value { width: 200px; }
+#years > li > .label {
+    font-size: 2em;
+    display: block;
+}
+#keys .value { width: 200px; }
 </style>
   </head>
   <body>
 <header>
 <h1>Choose Year</h1>
-<ul id="years">
-<li>2004</li>
-<li>2005</li>
-<li>2006</li>
-<li>2007</li>
-<li>2008</li>
-<li>2009</li>
-<li>2010</li>
-</ul>
+<ul id="years"></ul>
 </header>
 <section>
 <table id="keys" class="tablesorter">
-    <thead><tr><th>Place</th><th>Amount</th></tr></thead>
+    <thead><tr><th>Lobbyist</th><th>Amount</th></tr></thead>
     <tbody></tbody>
 </table>
 <div id="main">
@@ -47,9 +42,9 @@
   <script>
 var $db = $.couch.db("lobbying");
 var year;
-$('#years > li').click(function(){
-    year = +this.innerHTML;
-    load_data();
+$('#years > li').live('click', function(){
+    year = +$(this).children('.label').html();
+    load_data(year);
 });
 $('#keys .key').live('click', function(){
     var key = $(this).closest('tr').data('key');
@@ -71,12 +66,25 @@ $('#keys .value').click(function(){
     });
 
 });
+(function load_all_years(){
+    $db.view("lobbying/lobbyist-expense", {
+        group_level: 1,
+        success: function(jsonData){
+            var keys = $('#years').empty();
+            jsonData.rows.forEach(function(row){
+                $('<li><span class="label">' + row.key[0] + '</span><span class="total">'+row.value+'</span></li>')
+                    .appendTo(keys);
+            });
+        }
+    });
+})();
 function load_data(){
     $db.view("lobbying/lobbyist-expense", {
         group_level: 2,
         startkey: [year],
+        endkey: [year, {}],
         success: function(jsonData){
-            var keys = $('#keys > tbody');
+            var keys = $('#keys > tbody').empty();
             jsonData.rows.forEach(function(row){
                 $('<tr><td class="key">' + row.key[1] + '</td><td class="value">' + row.value + '</td></tr>')
                     .data('key',row.key)
