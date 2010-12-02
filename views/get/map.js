@@ -1,9 +1,12 @@
 function (doc){
-    var second = '';
-    switch (doc.type){
-        case 'lobbyist':
-            second = doc.lobbyist.id;
-        break;
+    if (doc.type){
+        var key = [doc.type];
+        switch (doc.type){
+            case 'lobbyist':
+                key.push(doc.lobbyist.id);
+                key.push(doc.year || '');
+            break;
+        }
+        emit(key, doc);
     }
-    emit([doc.type, second]. doc);
 }
