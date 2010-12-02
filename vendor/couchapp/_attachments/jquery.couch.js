@@ -268,6 +268,38 @@
             },
             options, "An error occurred accessing the view"
           );
+        },
+        show: function(name, id, options) {
+          function ajax(obj, options, errorMessage, ajaxOptions) {
+            options = $.extend({successStatus: 200}, options);
+            errorMessage = errorMessage || "Unknown error";
+
+            $.ajax($.extend({
+              type: "GET", dataType: "html",
+              complete: function(req) {
+                var resp = $.httpData(req, "html");
+                if (req.status == options.successStatus) {
+                  if (options.success) options.success(resp);
+                } else if (options.error) {
+                  options.error(req.status, resp.error, resp.reason);
+                } else {
+                  alert(errorMessage + ": " + resp.reason);
+                }
+              }
+            }, obj), ajaxOptions);
+          }
+          var name = name.split('/');
+          var options = options || {};
+          var type = "GET";
+          var data= null;
+          $.ajax({
+              type: type,
+              data: data,
+              url: this.uri + "_design/" + name[0] +
+                   "/_show/" + name[1] + "/" + id + encodeOptions(options)
+            },
+            options, "An error occurred accessing the view"
+          );
         }
       };
     },
