@@ -43,10 +43,10 @@ var key_data_cache = {};
                 elem.find('.key').click(function(){
                     var lobbyistId = row.key[1].split(' ')[0];
                     var year = 2010;
-                    $db.openDoc('lobbyist-'+lobbyistId+'_'+year,{
+                    $db.show('lobbying/lobbyist','lobbyist-' + lobbyistId+'_'+year,{
                             success: function(data){
                                 doc = data;
-                                $('#main').text(JSON.stringify(data));
+                                $('#main').text(data);
                             }
                         });
                 });
