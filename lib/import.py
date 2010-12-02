@@ -73,12 +73,12 @@ def process(path_to_file):
         return
     processors = {
         'LaCVR.csv'  : CSVProcessorCVR,
-        'LaAwrd.csv' : CSVProcessorAwrd,
-        'LaEnt.csv'  : CSVProcessorEnt,
-        'LaEvnt.csv' : CSVProcessorEvnt,
-        'LaFood.csv' : CSVProcessorFood,
-        'LaGift.csv' : CSVProcessorGift,
-        'LaTran.csv' : CSVProcessorTran,
+        #'LaAwrd.csv' : CSVProcessorAwrd,
+        #'LaEnt.csv'  : CSVProcessorEnt,
+        #'LaEvnt.csv' : CSVProcessorEvnt,
+        #'LaFood.csv' : CSVProcessorFood,
+        #'LaGift.csv' : CSVProcessorGift,
+        #'LaTran.csv' : CSVProcessorTran,
     }
     try:
         processor = processors[os.path.basename(path_to_file)]()
