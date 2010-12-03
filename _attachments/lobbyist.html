@@ -3,50 +3,60 @@
   <head>
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"></script>
     <script src="vendor/couchapp/jquery.couch.js"></script>
-    <script src="vendor/couchapp/jquery.tablesorter.min.js"></script>
+    <script src="http://ajax.microsoft.com/ajax/jquery.templates/beta1/jquery.tmpl.min.js"></script>
     <script src="lobbying.js"></script>
     <link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.8.2r1/build/reset/reset-min.css">
-    <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1/themes/base/jquery-ui.css" rel="stylesheet" type="text/css" />
+   <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1/themes/base/jquery-ui.css" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="style/main.css" type="text/css">
     <title>Browse</title>
     <!--[if IE]>
         <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
 <style>
-#years > li {
-    display: inline-block;
-    margin: 0 1em;
-}
-#years > li > .label {
-    font-size: 2em;
-    display: block;
-}
-#keys .value { width: 200px; }
+h2 { text-transform: uppercase; font-size: 1.1em; font-weight: bold; border-bottom: 1px solid black; }
+dt { display: block; font-weight: bold; float: left; clear: left; width: 70px; }
+dd { display: block; margin-left: 70px; }
 </style>
   </head>
   <body>
-<header>
-    <h1>Choose Year</h1>
-    <ul id="years"></ul>
-</header>
-<section>
-<table id="keys" class="tablesorter">
-    <thead><tr><th>Lobbyist</th><th>Amount</th></tr></thead>
-    <tbody></tbody>
-</table>
 <div id="main">
-
 </div>
-</section>
-  </body>
+</body>
+<script id="lobbyistTemplate" type="text/x-jquery-tmpl">
+    <section id="entry" class="column">
+        <h2>Personal Profile</h2>
+        <dl>
+            <dt>Name</dt><dd>${lobbyist.name}</dd>
+            <dt>Occupation</dt><dd>${lobbyist.occupation}</dd>
+            <dt>Phone</dt><dd>${lobbyist.phone}</dd>
+            <dt>Address</dt>
+            <dd>
+            ${lobbyist.address}<br/>
+            ${lobbyist.city}, ${lobbyist.state} ${lobbyist.zip}
+            </dd>
+        </dl>
+        <h2>Activity</h2>
+        <h2>Clients</h2>
+        <ul>
+        {{each(i,c) client}}
+          <li><span class="name">${c.name}</span>
+          (${c.state})
+          </li>
+        {{/each}}
+        </ul>
+    </section>
+</script>
   <script>
 var $db = $.couch.db("lobbying");
+
 (function load(){
     $db.view("lobbying/get", {
         startkey: ['lobbyist', 33418],
         endkey: ['lobbyist', 33418, {}],
         success: function(result){
             log(result.rows);
+            data = result.rows[0].value;
+            $('#lobbyistTemplate').tmpl(data).appendTo('#main');
         }
     });
 })();
