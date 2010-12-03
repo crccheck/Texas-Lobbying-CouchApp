@@ -4,6 +4,7 @@ import simplejson as json
 import couchdb
 from urllib import urlopen, urlretrieve
 import os
+import sys
 from calendar import timegm
 from time import strptime
 from CSVProcessors import CSVProcessorAwrd, CSVProcessorCVR, CSVProcessorEnt, CSVProcessorEvnt, CSVProcessorFood, CSVProcessorGift, CSVProcessorTran
@@ -16,6 +17,8 @@ DATABASE = data['env']['default']['db'].rsplit('/', 1)
 DATABASE = {'server': DATABASE[0], 'db': DATABASE[1]}
 
 CONFLICT = 'replace' #update, replace, ignore
+data_dir = 'csvdata'
+
 
 def couch_start(dbname = None):
     if dbname is None:
@@ -52,7 +55,6 @@ def download(force = False):
             return int(os.path.getmtime(data_dir + '/' + os.listdir(data_dir)[0]))
         except:
             return 0
-    data_dir = 'csvdata'
     url = 'http://www.ethics.state.tx.us/tedd/TEC_LA_CSV.zip'
     log('time check %s %s' % (remote_getmtime(), local_getmtime()))
     if force or abs(remote_getmtime() - local_getmtime()) > 7 * 864000:
@@ -66,6 +68,9 @@ def download(force = False):
 
 def process(path_to_file):
     log(path_to_file)
+    if (path_to_file.find('LobCon')):
+        get_lobbyists(path)
+        return
     processors = {
         'LaCVR.csv'  : CSVProcessorCVR,
         'LaAwrd.csv' : CSVProcessorAwrd,
@@ -165,14 +170,15 @@ def get_lobbyists(path='csvdata/LobCon10.csv'):
 
 
 def main():
-    files = download()
+    log('Importing CSVs')
+    log('Conflict Resolution Method: %s' % CONFLICT)
+    log('Database: {server}/{db}'.format(*DATABASE))
+    download()
+    files = [data_dir + '/' + f for f in os.listdir(data_dir) if f[-3:] == 'csv']
     for f in files:
         process(f);
 
-#def main():
-#    get_lobbyists()
-
 logging.basicConfig(level=logging.INFO)
 
-
-main()
+if __name__ == '__main__':
+    main()
