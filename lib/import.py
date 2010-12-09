@@ -68,8 +68,8 @@ def download(force = False):
 
 def process(path_to_file):
     log(path_to_file)
-    if (path_to_file.find('LobCon')):
-        get_lobbyists(path)
+    if (path_to_file.find('LobCon') != -1):
+        get_lobbyists(path_to_file)
         return
     processors = {
         'LaCVR.csv'  : CSVProcessorCVR,
@@ -172,7 +172,7 @@ def get_lobbyists(path='csvdata/LobCon10.csv'):
 def main():
     log('Importing CSVs')
     log('Conflict Resolution Method: %s' % CONFLICT)
-    log('Database: {server}/{db}'.format(*DATABASE))
+    log('Database: {server}/{db}'.format(**DATABASE))
     download()
     files = [data_dir + '/' + f for f in os.listdir(data_dir) if f[-3:] == 'csv']
     for f in files:
