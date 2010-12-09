@@ -21,9 +21,19 @@ class CSVProcessor(object):
                 return amount
         return fix_amount(row)
     def lobbyist_info(self, row):
-        data = {'name': row['LOB_NAME'], 'id': int(row['FILER_ID'])}
-        if row['LOB_SORT'] != row['LOB_NAME']:
-            data['sort'] = row['LOB_SORT']
+        mapping = {
+            'LOB_NAME' : 'name',
+            'FILER_NAML': 'last',
+            'FILER_NAMF': 'first',
+            'FILER_NAMT': 'title',
+            'FILER_NAMS': 'suffix',
+            'FILERSHORT': 'short',
+            'LOB_SORT': 'sort',
+        }
+        data = {'id': int(row['FILER_ID'])}
+        for csvName, name in mapping.iteritems():
+            if csvName in row and row[csvName]:
+                data[name] = row[csvName]
         return data
     def recipient_info(self, row):
         data = {'name': u"%s %s" % (unicode(row['REC_NAMF'], errors='replace'), row['REC_NAML'])}
