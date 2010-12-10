@@ -89,7 +89,12 @@ def process(path_to_file):
     reader = DictReader(f)
     updates = 0
     for i, row in enumerate(reader):
-        row_id, row_data = processor.process(row)
+        try:
+            row_id, row_data = processor.process(row)
+        except as e:
+            # Don't Care About this, but it would be nice if it didn't
+            derp(e)
+            continue
         debug("%d : %s %s" % (i, row_id, row_data))
         doc = db.get(row_id)
         if doc:
@@ -104,7 +109,7 @@ def process(path_to_file):
                 updates += 1
         else:
             db[row_id] = row_data
-        if not (i % 100):
+        if not (i % 1000):
             log("%d: Updates(%s)" % (i, updates))
     log("%d: Finished! Updates(%s)" % (i, updates))
     f.close()
