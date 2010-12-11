@@ -9,7 +9,6 @@ from calendar import timegm
 from time import strptime
 from CSVProcessors import CSVProcessorAwrd, CSVProcessorCVR, CSVProcessorEnt, CSVProcessorEvnt, CSVProcessorFood, CSVProcessorGift, CSVProcessorTran
 
-
 f = open('../.couchapprc','r')
 data = json.load(f)
 f.close()
@@ -18,7 +17,6 @@ DATABASE = {'server': DATABASE[0], 'db': DATABASE[1]}
 
 CONFLICT = 'replace' #update, replace, ignore
 data_dir = 'csvdata'
-
 
 def couch_start(dbname = None):
     if dbname is None:
@@ -173,7 +171,6 @@ def get_lobbyists(path='csvdata/LobCon10.csv'):
         if not (i % 100):
             print i
 
-
 def main():
     log('Importing CSVs')
     log('Conflict Resolution Method: %s' % CONFLICT)
@@ -181,7 +178,7 @@ def main():
     download()
     files = [data_dir + '/' + f for f in os.listdir(data_dir) if f[-3:] == 'csv']
     for f in files:
-        process(f);
+        process(f)
 
 logging.basicConfig(level=logging.INFO)
 
