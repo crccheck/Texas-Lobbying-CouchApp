@@ -1,5 +1,5 @@
 function slugify(text){
-    text = text.toLowerCase().replace(/[^-a-z0-9,&\s]+/g, '');
+    text = text.toLowerCase().replace(/[^-a-z0-9\s]+/g, '');
     text = text.replace(/-/g, "_");
     text = text.replace(/\s/g, "-");
     return text;
