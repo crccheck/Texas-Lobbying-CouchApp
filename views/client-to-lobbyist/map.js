@@ -9,7 +9,7 @@ function(doc) {
         for each (var client in doc.client){
             if (client.name){
                 var key = [slugify(client.name), doc.year];
-                var value = doc.lobbyist.id;
+                var value = {client: client, lobbyist: doc.lobbyist.id};
                 emit(key, value);
             }
         }
