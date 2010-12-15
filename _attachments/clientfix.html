@@ -16,10 +16,13 @@
   <body>
 <h1>Client Name Fix Tool</h1>
 <p>To adjust text size, use your browser's built in zoom functionality</p>
+<p>To merge two items, drag the "bad" entry onto the "good" entry</p>
+<p>To delete fix, double click the top entry and set the fix to an empty string.*</p>
+<p>* = requires refresh</p>
 <ul id="keys"></ul>
   </body>
   <script>
-$db = $.couch.db("lobbying-funsize");
+$db = $.couch.db(document.location.href.split('/')[3]);
 var key_data_cache = {};
 
 function addfix(goodKey, badKey){
