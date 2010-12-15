@@ -4,3 +4,5 @@
 .~lock.*
 .DS_Store
 lib/csvdata
+lib/funsize.py
+erl_crash.dump
