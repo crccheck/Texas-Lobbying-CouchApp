@@ -9,7 +9,7 @@ function(doc) {
     if (doc.type == 'lobbyist'){
         for each (var client in doc.client){
             if (client.name){
-                var key = [doc.year, slugify(client.name)];
+                var key = [doc.year, client.identifier || slugify(client.name)];
                 var value = [Math.round(+client.compensation.low),
                              Math.round(+client.compensation.high),
                              1,

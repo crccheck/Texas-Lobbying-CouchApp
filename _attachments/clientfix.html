@@ -14,30 +14,33 @@
 
   </head>
   <body>
-<p>Client Name Fix Tool</p>
-<ul id="keys">
-
-</ul>
-
+<h1>Client Name Fix Tool</h1>
+<p>To adjust text size, use your browser's built in zoom functionality</p>
+<ul id="keys"></ul>
   </body>
   <script>
-$db = $.couch.db("lobbying");
+$db = $.couch.db("lobbying-funsize");
 var key_data_cache = {};
 
 function addfix(goodKey, badKey){
     log("addfix ("+badKey+") -> ("+goodKey+")");
     function clearKeyfix(key){
         $db.view('lobbying/get', {
-            startkey: ["client", badKey],
-            endkey: ["client", badKey, {}],
+            startkey: ["client", key],
+            endkey: ["client", key, {}],
             reduce: false,
             include_docs: true,
             success: function(data){
                 var docs = {docs: []};
                 data.rows.forEach(function(row){
                     var doc = row.doc;
-                    //delete doc.place.namefix;
-                    //docs.docs.push(doc);
+                    doc.client.forEach(function(c){
+                        if (c.identifier == key){
+                            delete c.identifier;
+                            log('cleared',doc);
+                        }
+                    });
+                    docs.docs.push(doc);
                 });
                 save(docs);
             }
@@ -60,6 +63,7 @@ function addfix(goodKey, badKey){
             });
         }
     }
+
     if (goodKey === false) {
         // do nothing
     } else if (!goodKey) {
@@ -170,7 +174,7 @@ function combine($goodKey, $badKey){
                             drop: function(e, ui){ combine($(e.target), ui.draggable); }})
                 .end().show();
 
-            //load_keys();
+            load_keys();
         }
     });
 })();
@@ -179,8 +183,8 @@ function combine($goodKey, $badKey){
 //   if the "dirty" key has already been pulled, re-clean it
 function load_keys() {
     log("Load Key Fix DB");
-    $db.view('lobbying/keyfix', {
-        group_level: 1,
+    $db.view('lobbying/clientfix', {
+        group: true,
         success: function(data){
             data.rows.forEach(function(row){
                 (function(dirtyKey, cleanKey){
@@ -196,8 +200,7 @@ function load_keys() {
                             cleanKeyLi.wrap('<li><ul/><li>')
                         }
                         $('<li id="key-'+dirtyKeyId+'"><span class="key">' + dirtyKey + '</span></li>')
-                            .click(function(){ if (!$(this).hasClass('loaded')) { display_key_data(this, dirtyKey); } })
-                            .dblclick(function(){ addfix(prompt("new name"), dirtyKey); })
+                            .dblclick(function(){ addfix(prompt("new name", dirtyKey), dirtyKey); })
                             .draggable({addClasses: false, revert: true, zIndex: 1})
                             .droppable({addClasses: false,
                                         drop: function(e, ui){ combine($(e.target), ui.draggable); }})

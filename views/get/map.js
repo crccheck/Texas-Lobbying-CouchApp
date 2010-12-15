@@ -28,6 +28,6 @@ function (doc){
                 key.push(doc.report.year || '');
             break;
         }
-        //emit(key, doc);
+        emit(key, 1);
     }
 }
