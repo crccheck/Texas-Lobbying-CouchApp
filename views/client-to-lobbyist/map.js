@@ -8,7 +8,7 @@ function(doc) {
     if (doc.type == 'lobbyist'){
         for each (var client in doc.client){
             if (client.name){
-                var key = [slugify(client.name), doc.year];
+                var key = [client.identifier || slugify(client.name), doc.year];
                 var value = {client: client, lobbyist: doc.lobbyist.id};
                 emit(key, value);
             }

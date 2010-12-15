@@ -117,6 +117,7 @@ class CSVProcessorAwrd(CSVProcessor):
             'amount': self.get_amount(row),
             'award': row['AWARD_DSCR'],
             'date': row['RPT_DATE'],
+            'year': row['YEAR_APPL'],
         })
         return (row_id, row_data)
 
@@ -130,6 +131,7 @@ class CSVProcessorEnt(CSVProcessor):
             'amount': self.get_amount(row),
             'place': {'name': row['ENT_NAME'], 'city': row['ENT_CITY']},
             'date': row['ENT_DATE'],
+            'year': row['YEAR_APPL'],
         })
         if row['ENT_STCD']:
             row_data['place']['state'] = row['ENT_STCD']
@@ -145,6 +147,7 @@ class CSVProcessorEvnt(CSVProcessor):
         row_id, row_data = super(CSVProcessorEvnt, self).process(row)
         row_data['event'] = { 'name': row['EVENT_NAME'] }
         row_data['date'] = row['EVENT_DATE']
+        row_data['year'] = row['YEAR_APPL']
         if row['CHARITY_CB']:
             row_data['event']['type'] = 'charity'
         elif row['FUND_CB']:
@@ -162,6 +165,7 @@ class CSVProcessorFood(CSVProcessor):
             'amount': self.get_amount(row),
             'place': {'name': row['EXP_PLACE'], 'city': row['EXP_CITY']},
             'date': row['EXP_DATE'],
+            'year': row['YEAR_APPL'],
         })
         if row['EXP_STCD']:
             row_data['place']['state'] = row['EXP_STCD']
@@ -179,6 +183,7 @@ class CSVProcessorGift(CSVProcessor):
             'amount': self.get_amount(row),
             'gift': row['GIFT_DSCR'],
             'date': row['RPT_DATE'],
+            'year': row['YEAR_APPL'],
         })
         return (row_id, row_data)
 
@@ -194,7 +199,8 @@ class CSVProcessorTran(CSVProcessor):
         row_data.update({
             'transportation': row['TRANSTYPE'],
             'purpose': row['PURPOSE'],
-            'place' : self.lodging_info(row),
+            'place': self.lodging_info(row),
+            'year': row['YEAR_APPL'],
         })
         row_data['departure'] = { 'city': row['DPT_CITY'], 'date': row['DPT_DATE'] }
         row_data['arrival'] = { 'city': row['ARV_CITY'], 'date': row['ARV_DATE'] }

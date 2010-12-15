@@ -70,13 +70,13 @@ def process(path_to_file):
         get_lobbyists(path_to_file)
         return
     processors = {
-        'LaCVR.csv'  : CSVProcessorCVR,
-        #'LaAwrd.csv' : CSVProcessorAwrd,
-        #'LaEnt.csv'  : CSVProcessorEnt,
-        #'LaEvnt.csv' : CSVProcessorEvnt,
-        #'LaFood.csv' : CSVProcessorFood,
-        #'LaGift.csv' : CSVProcessorGift,
-        #'LaTran.csv' : CSVProcessorTran,
+        #'LaCVR.csv'  : CSVProcessorCVR,
+        'LaAwrd.csv' : CSVProcessorAwrd,
+        'LaEnt.csv'  : CSVProcessorEnt,
+        'LaEvnt.csv' : CSVProcessorEvnt,
+        'LaFood.csv' : CSVProcessorFood,
+        'LaGift.csv' : CSVProcessorGift,
+        'LaTran.csv' : CSVProcessorTran,
     }
     try:
         processor = processors[os.path.basename(path_to_file)]()
@@ -89,9 +89,9 @@ def process(path_to_file):
     for i, row in enumerate(reader):
         try:
             row_id, row_data = processor.process(row)
-        except as e:
+        except:
             # Don't Care About this, but it would be nice if it didn't
-            derp(e)
+            derp('OOPS')
             continue
         debug("%d : %s %s" % (i, row_id, row_data))
         doc = db.get(row_id)
