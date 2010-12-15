@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="vendor/couchapp/loader.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.0/jquery-ui.min.js"></script>
+    <script src="lobbying.js"></script>
+    <link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.8.2r1/build/reset/reset-min.css">
+    <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1/themes/base/jquery-ui.css" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="style/main.css" type="text/css">
+    <title>Client Name Fix</title>
+    <!--[if IE]>
+        <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+  </head>
+  <body>
+<p>Client Name Fix Tool</p>
+<ul id="keys">
+
+</ul>
+
+  </body>
+  <script>
+$db = $.couch.db("lobbying");
+var key_data_cache = {};
+
+function addfix(goodKey, badKey){
+    log("addfix ("+badKey+") -> ("+goodKey+")");
+    function clearKeyfix(key){
+        $db.view('lobbying/get', {
+            startkey: ["client", badKey],
+            endkey: ["client", badKey, {}],
+            reduce: false,
+            include_docs: true,
+            success: function(data){
+                var docs = {docs: []};
+                data.rows.forEach(function(row){
+                    var doc = row.doc;
+                    //delete doc.place.namefix;
+                    //docs.docs.push(doc);
+                });
+                save(docs);
+            }
+        });
+
+    }
+    function save(docs){
+        log("SAVING", docs);
+        // either do a bulk save or single save depending on the number of docs
+        if (docs.docs.length > 1) {
+            $db.bulkSave(docs, {
+                success: function(data) { log("UPDATED", data.length); },
+                error: function(a, b, c) { log('ERROR',a,b,c); }
+            });
+        } else if (docs.docs.length == 1) {
+            $db.saveDoc(docs.docs[0], {
+                success: function(data){
+                    log("UPDATED", data.id);
+                }
+            });
+        }
+    }
+    if (goodKey === false) {
+        // do nothing
+    } else if (!goodKey) {
+        // delete this fix
+        clearKeyfix(badKey);
+    } else {
+        // todo handle circular key references
+        $db.view('lobbying/get', {
+            startkey: ["client", badKey],
+            endkey: ["client", badKey, {}],
+            reduce: false,
+            include_docs: true,
+            success: function(data){
+                docs = {docs: []};
+                data.rows.forEach(function(row){
+                    var doc = row.doc;
+                    doc.client.forEach(function(c){
+                        if (slugify(c.name) == badKey){
+                            c.identifier = goodKey;
+                            log('fixed',doc);
+                        }
+                    });
+                    docs.docs.push(doc);
+                });
+                save(docs);
+           }
+        });
+    }
+}
+
+function display_key_data(elem, key, value){
+    function _display_key_data(elem, key, value){
+        var $elem = $(elem);
+        if ($elem.hasClass('loaded')) return;
+        var output = '';
+        if (value.city){
+            output += '<span class="city">' + value.city + '</span>';
+        }
+        if (value.zip){
+            output += '<span class="zip">' + value.zip + '</span>';
+        }
+        $elem.append(output).addClass('loaded');
+    }
+    function load_key_data(key){
+        // key = escape(key);
+        // todo debounce
+        // todo scan for next !.has('loaded') to intelligently come up with an endkey
+        return $db.view('lobbying/place-to-location',{
+            group_level: 1,
+            startkey: key,
+            limit: 30,
+            success: function(jsonData){
+                jsonData.rows.forEach(function(row){
+                    key_data_cache[row.key] = row.value;
+                    display_key_data($('#key-' + crc32(row.key)), row.key, row.value);
+                });
+            }
+        });
+    }
+    if (value || (value = key_data_cache[key])){
+        _display_key_data(elem, key, value);
+    } else {
+        load_key_data(key);
+    }
+}
+
+function combine($goodKey, $badKey){
+    var newUl = $goodKey.parent(),
+        oldUl = $badKey.parent();
+    if (newUl.attr('id')){
+        // new keyfix
+        newUl = $goodKey.wrap('<li><ul/></li>').parent();
+    } else if (newUl[0] == oldUl[0]) {
+        // dragged onto self
+        newUl.prepend($badKey);
+        var goodKey = $badKey.find('.key').html();
+        addfix('', goodKey);    // clear this key
+        newUl.children(':gt(0)').each(function(){
+            addfix(goodKey, $(this).find('.key').html(), 'to');
+        });
+        return;
+    }
+    newUl.append($badKey);
+    var goodKey = newUl.find('.key').html();
+    addfix(goodKey, $badKey.children('.key').html());
+}
+
+// pull initial list
+(function load_data(){
+    log("Load Keys");
+    $db.view("lobbying/get", {
+        startkey: ["client"],
+        endkey: ["client", {}],
+        group: true,
+        success: function(jsonData){
+            var keys = $('#keys').hide();
+            jsonData.rows.forEach(function(row){
+                var key = row.key[1];
+                var hash = crc32(key);
+                elem = $('<li id="key-' + hash + '"><span class="key">' + key + '</span><span>' + row.value + '</span></li>')
+                    //.click(function(){ if (!$(this).hasClass('loaded')) { display_key_data(this, key); } })
+                    .dblclick(function(){ addfix(prompt("new name", key), key); })
+                    .appendTo(keys);
+            });
+            keys.children()
+                .draggable({addClasses: false, revert: true, zIndex: 1})
+                .droppable({addClasses: false,
+                            drop: function(e, ui){ combine($(e.target), ui.draggable); }})
+                .end().show();
+
+            //load_keys();
+        }
+    });
+})();
+
+// pulls all the current key fixes in place, and displays them as level 2 lists
+//   if the "dirty" key has already been pulled, re-clean it
+function load_keys() {
+    log("Load Key Fix DB");
+    $db.view('lobbying/keyfix', {
+        group_level: 1,
+        success: function(data){
+            data.rows.forEach(function(row){
+                (function(dirtyKey, cleanKey){
+                    var dirtyKeyId = crc32(dirtyKey);
+                    var dirtyKeyLi = $('#key-' + dirtyKeyId);
+                    var cleanKeyId = crc32(cleanKey);
+                    var cleanKeyLi = $('#key-' + cleanKeyId);
+                    if (cleanKeyLi.length && dirtyKeyLi.length) {
+                        log('force update', dirtyKey, cleanKey);
+                        combine(cleanKeyLi, dirtyKeyLi);
+                    } else if (cleanKeyLi.length && !dirtyKeyLi.length){
+                        if (cleanKeyLi.parent().attr('id')) {
+                            cleanKeyLi.wrap('<li><ul/><li>')
+                        }
+                        $('<li id="key-'+dirtyKeyId+'"><span class="key">' + dirtyKey + '</span></li>')
+                            .click(function(){ if (!$(this).hasClass('loaded')) { display_key_data(this, dirtyKey); } })
+                            .dblclick(function(){ addfix(prompt("new name"), dirtyKey); })
+                            .draggable({addClasses: false, revert: true, zIndex: 1})
+                            .droppable({addClasses: false,
+                                        drop: function(e, ui){ combine($(e.target), ui.draggable); }})
+                            .insertAfter(cleanKeyLi);
+                    }
+                })(row.key, row.value);
+            });
+        },
+    });
+}
+
+
+  </script>
+</html>
