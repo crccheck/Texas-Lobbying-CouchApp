@@ -12,7 +12,7 @@ function (doc){
             case 'lobbyist':
                 key.push(doc.lobbyist.id);
                 key.push(doc.year || '');
-                if (doc.client && doc.client){
+                if (doc.client){
                     for each (var c in doc.client){
                         if (c.name){
                             emit(
