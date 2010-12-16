@@ -1,3 +1,6 @@
+/*
+ *  This is used to build graphs of a lobbyist's spending from year to year
+ */
 function(doc) {
   if (doc.type == 'cover'){
     var year = doc.report.year || 0;

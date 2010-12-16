@@ -1,3 +1,7 @@
+/*
+ * Used for generating a list of all clients
+ */
+
 function slugify(text){
     text = text.toLowerCase().replace(/[^-a-z0-9\s]+/g, '');
     text = text.replace(/-+/g, "_");
@@ -11,7 +15,7 @@ function (doc){
             if (c.name){
                 emit(
                      [c.identifier || slugify(c.name)],
-                     [1, c.name]
+                     [1, c.state, c.name]
                     );
             }
         }

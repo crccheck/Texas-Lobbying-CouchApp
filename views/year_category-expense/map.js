@@ -1,3 +1,6 @@
+/*
+ *  This is used to get yearly aggregate stats for every category
+ */
 function(doc) {
   if (doc.type == 'cover'){
     var year = doc.report.year || 0;

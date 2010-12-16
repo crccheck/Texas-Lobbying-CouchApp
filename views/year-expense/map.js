@@ -1,3 +1,8 @@
+/*
+ * this is derived from lobbyist-expense/map.js
+ * the keys order prioritizes year
+ * we only use up to group_level=3
+ */
 function(doc) {
   if (doc.type == 'cover'){
     var year = doc.report.year || 0;

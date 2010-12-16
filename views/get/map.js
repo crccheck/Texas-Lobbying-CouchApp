@@ -1,3 +1,8 @@
+/*
+ *  Generic view to help quickly "get" any type of document
+ *  use reduce=false&include_docs=true if you're trying to get documents
+ *  and group=true if you're getting quick stats
+ */
 function slugify(text){
     text = text.toLowerCase().replace(/[^-a-z0-9\s]+/g, '');
     text = text.replace(/-+/g, "_");

@@ -1,3 +1,6 @@
+/*
+ *  Used to generate a list of all lobbyists associated with a client
+ */
 function slugify(text){
     text = text.toLowerCase().replace(/[^-a-z0-9\s]+/g, '');
     text = text.replace(/-+/g, "_");

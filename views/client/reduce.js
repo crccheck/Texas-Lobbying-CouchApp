@@ -3,6 +3,7 @@ function (keys, values){
     values.forEach(function(x){
         o[0] += x[0];
         o[1]  = x[1];
+        o[2]  = x[2];
     });
     return o;
 }

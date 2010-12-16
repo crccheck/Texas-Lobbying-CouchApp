@@ -1,3 +1,6 @@
+/*
+ * Used for the clientfix tool to clean dirty data
+ */
 function slugify(text){
     text = text.toLowerCase().replace(/[^-a-z0-9\s]+/g, '');
     text = text.replace(/-+/g, "_");

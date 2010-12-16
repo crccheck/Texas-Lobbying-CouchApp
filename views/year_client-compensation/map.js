@@ -1,3 +1,6 @@
+/*
+ * This is used to get the top spending interests in a year
+ */
 function slugify(text){
     text = text.toLowerCase().replace(/[^-a-z0-9\s]+/g, '');
     text = text.replace(/-+/g, "_");
