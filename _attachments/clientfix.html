@@ -11,7 +11,27 @@
     <!--[if IE]>
         <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
-
+    <style type="text/css">
+h1 { font-size: 2em; }
+h2 { font-size: 1.4em; }
+p { margin-left: 1em; }
+#keys {
+    float: left;
+    padding-left: 1em;
+}
+#keys li { background: transparent; padding: 1px; }
+#keys > li {
+    margin: 1px;
+    border: 1px solid #BCBCEF;
+    background-color: #eef;
+}
+#keys .key { width: 42em; }
+#data {
+    position: fixed;
+    top: 0;
+    right: 0;
+}
+    </style>
   </head>
   <body>
 <h1>Client Name Fix Tool</h1>
@@ -19,14 +39,18 @@
 <p>To <b>merge</b> two items, drag the "bad" entry onto the "good" entry</p>
 <p>To <b>merge</b> two items manually, double click on the "bad" entry and type in the "good" entry.*</p>
 <p>To <b>delete</b> fix, double click the top entry and set the fix to an empty string.*</p>
+<p>To <b>clear</b> the address helper, double click in the area or do a merge action.</p>
 <p>* = requires refresh</p>
+<h2>Client Names</h2>
 <ul id="keys"></ul>
+<div id="data"></div>
   </body>
   <script>
 $db = $.couch.db(document.location.href.split('/')[3]);
 var key_data_cache = {};
 
 function addfix(goodKey, badKey){
+    $('#data').empty();
     log("addfix ("+badKey+") -> ("+goodKey+")");
     function clearKeyfix(key){
         $db.view('lobbying/get', {
@@ -68,7 +92,7 @@ function addfix(goodKey, badKey){
         }
     }
 
-    if (goodKey === false) {
+    if (goodKey === false || goodKey === null) {
         // do nothing
     } else if (!goodKey) {
         // delete this fix
@@ -155,6 +179,29 @@ function combine($goodKey, $badKey){
     addfix(goodKey, $badKey.children('.key').html());
 }
 
+function load_client(key){
+    $db.view("lobbying/client-to-lobbyist", {
+        startkey: [key],
+        endkey: [key, {}],
+        success: function(jsonData){
+            var div = $('#data');
+            var oldoutput = '';
+            jsonData.rows.forEach(function(row, i){
+                var c = row.value.client;
+                var output = c.address + '<br>' + c.city + ' ' + c.state + ' ' + c.zip + '<br>';
+                var outputHash = crc32(output.toUpperCase().replace(/\s+/g,''));
+                var doOutput = outputHash != oldoutput;
+                oldoutput = outputHash;
+                log(oldoutput);
+                if (!i) {
+                    output = '<h1>' + c.name + '</h1>' + output;
+                }
+                if (doOutput) div.append($('<div>' + output + '</div>'));
+            });
+        }
+    });
+}
+
 // pull initial list
 (function load_data(){
     log("Load Keys");
@@ -167,10 +214,13 @@ function combine($goodKey, $badKey){
             jsonData.rows.forEach(function(row){
                 var key = row.key[1];
                 var hash = crc32(key);
-                elem = $('<li id="key-' + hash + '"><span class="key">' + key + '</span><span>' + row.value + '</span></li>')
+                elem = $('<li id="key-' + hash + '"><span class="key">' + key +
+                         '<a target="clientfix" href="http://'+document.domain+':8000/library/data/lobbying/client/' +
+                         key + '/">(view)</a>' + '</span><span>' + row.value + '</span></li>')
                     //.click(function(){ if (!$(this).hasClass('loaded')) { display_key_data(this, key); } })
                     .dblclick(function(){ addfix(prompt("new name", key), key); })
-                    .appendTo(keys);
+                    .find('a').click(function(){ load_client(key); return false; })
+                    .end().appendTo(keys);
             });
             keys.children()
                 .draggable({addClasses: false, revert: true, zIndex: 1})
@@ -204,7 +254,7 @@ function load_keys() {
                             cleanKeyLi.wrap('<li><ul/><li>')
                         }
                         $('<li id="key-'+dirtyKeyId+'"><span class="key">' + dirtyKey + '</span></li>')
-                            .dblclick(function(){ addfix(prompt("new name", dirtyKey), dirtyKey); })
+                            //.dblclick(function(){ addfix(prompt("new name", dirtyKey), dirtyKey); })
                             .draggable({addClasses: false, revert: true, zIndex: 1})
                             .droppable({addClasses: false,
                                         drop: function(e, ui){ combine($(e.target), ui.draggable); }})
@@ -217,5 +267,6 @@ function load_keys() {
 }
 
 
+$('#data').dblclick(function(){ this.innerHTML = ''; });
   </script>
 </html>
