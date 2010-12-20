@@ -1,0 +1,1 @@
+../../couchdb-funsize/lib/funsize.py
